@@ -7,3 +7,5 @@ go_build_main_go
 vendor/
 *.exe
 test.go
+mysql.rules
+build.sh

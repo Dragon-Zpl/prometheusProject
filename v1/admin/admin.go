@@ -20,13 +20,21 @@ import (
 
 func Mapping(prefix string, app *gin.Engine) {
 	admin := app.Group(prefix)
+	// 报警处理接口
 	admin.POST("/webhook", PrometheusWebHook)
+	// 报警规则添加
 	admin.POST("/rules/add", PrometheusAddRules)
+	// 报警规则删除
 	admin.POST("/rules/delete", PrometheusAddDelete)
+	// 向prometheus添加服务(target)
 	admin.POST("/server/register", PrometheusRegister)
+	// 注销
 	admin.POST("/server/deregister", PrometheusDeRegister)
+	// 注册数据指标
 	admin.POST("/prom/register", RegisterVec)
+	// 操作指标(增减)
 	admin.POST("/prom/operation", Promoperation)
+	// 删除数据指标
 	admin.POST("/prom/unregister", UnRegisterVec)
 }
 
