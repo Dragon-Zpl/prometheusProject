@@ -1,0 +1,12 @@
+groups:
+- name: bbs_go
+  rules:
+  - alert: rule_test
+    expr: go_memstats_mspan_inuse_bytes > 2309007
+    for: 1s
+    labels:
+      severity: error
+      value: '{{$value}}'
+    annotations:
+      summary: "bbs go {{ $labels.instance }} test is down"
+      description: "is,t error "

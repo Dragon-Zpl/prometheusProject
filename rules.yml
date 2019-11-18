@@ -1,0 +1,16 @@
+groups:
+- name: {name}
+  rules:
+  - alert: {alertName}
+    expr: {condition}
+    for: {time}
+    labels:
+      severity: {severity}
+      value: '{{$value}}'
+      dingUrl: "{dingUrl}"
+      isAtAll: "{isAtAll}"
+      atList: "{alList}"
+      sendType: "{sendType}"
+    annotations:
+      summary: "{summary}"
+      description: "{description}"

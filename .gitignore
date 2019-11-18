@@ -1,0 +1,9 @@
+.idea
+.vscode
+conf/*.conf
+conf/*.ini
+go.sum
+go_build_main_go
+vendor/
+*.exe
+test.go
