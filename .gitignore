@@ -9,4 +9,3 @@ vendor/
 test.go
 mysql.rules
 build.sh
-/v1
