@@ -16,10 +16,12 @@ const (
 
 )
 
-var vecMap  map[string]int
+var VecMap  map[string]int
 
 func init() {
-	vecMap = make(map[string]int)
+	if VecMap == nil {
+		VecMap = make(map[string]int)
+	}
 }
 
 type Prom struct {
@@ -38,10 +40,10 @@ func (p *Prom) WithTimer(name string, labels []string) error {
 	if p.timer == nil {
 		p.timer = make(map[string]*prometheus.HistogramVec)
 	}
-	if vecMap == nil {
-		vecMap = make(map[string]int)
+	if VecMap == nil {
+		VecMap = make(map[string]int)
 	}
-	if _, ok := vecMap[name]; ok {
+	if _, ok := VecMap[name]; ok {
 		return errors.New("该指标已存在")
 	}
 	p.timer[name] = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -49,7 +51,9 @@ func (p *Prom) WithTimer(name string, labels []string) error {
 		Help: name,
 	}, labels)
 	PrometheusRegistry.MustRegister(p.timer[name])
-	vecMap[name] = len(labels)
+	// 提前注册
+	p.timer[name].GetMetricWithLabelValues(labels...)
+	VecMap[name] = len(labels)
 	return nil
 }
 
@@ -57,10 +61,10 @@ func (p *Prom) WithCounter(name string, labels []string) error {
 	if p.counter == nil {
 		p.counter = make(map[string]*prometheus.CounterVec)
 	}
-	if vecMap == nil {
-		vecMap = make(map[string]int)
+	if VecMap == nil {
+		VecMap = make(map[string]int)
 	}
-	if _, ok := vecMap[name]; ok {
+	if _, ok := VecMap[name]; ok {
 		return errors.New("该指标已存在")
 	}
 
@@ -69,7 +73,9 @@ func (p *Prom) WithCounter(name string, labels []string) error {
 		Help: name,
 	}, labels)
 	PrometheusRegistry.MustRegister(p.counter[name])
-	vecMap[name] = len(labels)
+	// 提前注册
+	p.counter[name].GetMetricWithLabelValues(labels...)
+	VecMap[name] = len(labels)
 	return nil
 }
 
@@ -77,10 +83,10 @@ func (p *Prom) WithState(name string, labels []string) error {
 	if p.state == nil {
 		p.state = make(map[string]*prometheus.GaugeVec)
 	}
-	if vecMap == nil {
-		vecMap = make(map[string]int)
+	if VecMap == nil {
+		VecMap = make(map[string]int)
 	}
-	if _, ok := vecMap[name]; ok {
+	if _, ok := VecMap[name]; ok {
 		return errors.New("该指标已存在")
 	}
 	p.state[name] = prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -88,7 +94,9 @@ func (p *Prom) WithState(name string, labels []string) error {
 		Help: name,
 	}, labels)
 	PrometheusRegistry.MustRegister(p.state[name])
-	vecMap[name] = len(labels)
+	// 提前注册
+	p.state[name].GetMetricWithLabelValues(labels...)
+	VecMap[name] = len(labels)
 	return nil
 }
 
@@ -148,7 +156,7 @@ func (p *Prom) Add(labels []string, v int64, name string) {
 }
 
 func (p *Prom) UnRegister(typ,name string) error {
-	if vecMap == nil {
+	if VecMap == nil {
 		return errors.New("不存在该类型指标")
 	}
 	switch typ {
@@ -185,7 +193,7 @@ func (p *Prom) UnRegister(typ,name string) error {
 
 func PrometheusOpeartor(jobName, name string, v int64 ,lables []string, opeator QueryType) error {
 	if prom, ok := RegisterPromMap[jobName]; ok {
-		if lables_len, ok := vecMap[name]; !ok {
+		if lables_len, ok := VecMap[name]; !ok {
 			return errors.New("该指标不存在，请前往注册")
 		} else {
 			if lables_len != len(lables) {
@@ -214,5 +222,5 @@ func PrometheusOpeartor(jobName, name string, v int64 ,lables []string, opeator 
 }
 
 func DeleteVec(name string)  {
-	delete(vecMap, name)
+	delete(VecMap, name)
 }

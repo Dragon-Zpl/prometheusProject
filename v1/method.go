@@ -131,6 +131,7 @@ func RegisterFromConsul()  {
 		jobDatas := consul.GetJobNameData(jobName)
 		for _, jobData := range jobDatas {
 			RegisterOneVec(jobName, jobData.Type, strings.Join(jobData.Labels, ","), jobData.Name)
+			prometheus.VecMap[jobData.Name] = len(jobData.Labels)
 		}
 	}
 }

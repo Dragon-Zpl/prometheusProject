@@ -77,3 +77,12 @@ type UnRegisterVecForm struct {
 	Name string `form:"name"`
 	Typ    string `form:"type"`
 }
+
+type CronWebHookForm struct {
+	TaskId string `json:"task_id"`
+	TaskName string `json:"task_name"`
+	Status string `json:"status"`
+	Result string `json:"result"`
+	DingUrl string `json:"ding_url"`
+
+}

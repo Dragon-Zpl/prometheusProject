@@ -36,6 +36,8 @@ func Mapping(prefix string, app *gin.Engine) {
 	admin.POST("/prom/operation", Promoperation)
 	// 删除数据指标
 	admin.POST("/prom/unregister", UnRegisterVec)
+	// 定时任务的webhook
+	admin.POST("/cronwebhook", CronWebHook)
 }
 
 func PrometheusWebHook(ctx *gin.Context)  {
@@ -458,4 +460,26 @@ func UnRegisterVec(ctx *gin.Context)  {
 	prometheus.DeleteVec(input.Name)
 	ctx.JSON(helper.Success())
 	return
+}
+
+func CronWebHook(ctx *gin.Context)  {
+	var input form.CronWebHookForm
+	if err := ctx.ShouldBind(&input); err != nil {
+		ctx.JSON(helper.Fail("参数校验失败"))
+		return
+	}
+
+
+
+	v1.SendDingDing(input.DingUrl, form.DingTalkRes{
+		Msgtype:  "markdown",
+		Markdown: &form.MarkdownData{
+			Title: "定时任务" + input.TaskName,
+			Text:  "定时任务" + input.Status + "@13974113203" + "\n ," + input.Result,
+		},
+		At:       &form.DingTalkAt{
+			AtMobiles: []string{"13974113203"},
+			IsAtAll:   false,
+		},
+	})
 }
