@@ -9,8 +9,9 @@ import (
 
 func main() {
 	conf.InitConf()
-	go prometheus.GetPromHttp(":6668").ListenAndServe()
+	go prometheus.GetPromHttp(":39927").ListenAndServe()
+	// 注册已存在任务
 	go v1.RegisterFromConsul()
 	r := route.Router()
-	r.Run(":6667")
+	r.Run(":39928")
 }

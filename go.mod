@@ -8,8 +8,11 @@ require (
 	github.com/go-ini/ini v1.49.0
 	github.com/hashicorp/consul/api v1.2.0
 	github.com/lxzan/hasaki v1.0.3
+	github.com/prometheus/alertmanager v0.19.0
 	github.com/prometheus/client_golang v1.2.1
 	github.com/shiena/ansicolor v0.0.0-20151119151921-a422bbe96644 // indirect
+	github.com/smartystreets/goconvey v1.6.4 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
+	gopkg.in/ini.v1 v1.51.0 // indirect
 )

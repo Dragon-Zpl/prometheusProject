@@ -475,10 +475,10 @@ func CronWebHook(ctx *gin.Context)  {
 		Msgtype:  "markdown",
 		Markdown: &form.MarkdownData{
 			Title: "定时任务" + input.TaskName,
-			Text:  "定时任务" + input.Status + "@" + "\n ," + input.Result,
+			Text:  "定时任务" + input.Status + "@13974113203" + "\n ," + input.Result,
 		},
 		At:       &form.DingTalkAt{
-			AtMobiles: []string{""},
+			AtMobiles: []string{"13974113203"},
 			IsAtAll:   false,
 		},
 	})
