@@ -22,6 +22,7 @@ type HotReload struct {
 
 type PromePath struct {
 	Path string
+	Recieve string
 }
 
 type EmailConfig struct {
