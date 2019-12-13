@@ -13,7 +13,7 @@ const (
 	Timing
 	Set
 	Add
-
+	Reset
 )
 
 var VecMap  map[string]int
@@ -130,6 +130,7 @@ func (p *Prom) Decr(name string, labels []string) {
 			v.WithLabelValues(labels...).Dec()
 		}
 	}
+
 }
 
 func (p *Prom) State(labels []string, v int64, name string) {
@@ -143,7 +144,9 @@ func (p *Prom) State(labels []string, v int64, name string) {
 func (p *Prom) Add(labels []string, v int64, name string) {
 	if p.counter != nil {
 		if vec, ok := p.counter[name]; ok{
-			vec.WithLabelValues(labels...).Add(float64(v))
+			if v > 0 {
+				vec.WithLabelValues(labels...).Add(float64(v))
+			}
 		}
 	}
 
@@ -154,6 +157,27 @@ func (p *Prom) Add(labels []string, v int64, name string) {
 	}
 
 }
+
+func (p *Prom) Reset(name string)  {
+	if p.counter != nil {
+		if vec, ok := p.counter[name]; ok{
+			vec.Reset()
+		}
+	}
+
+	if p.state != nil {
+		if vec, ok := p.state[name]; ok {
+			vec.Reset()
+		}
+	}
+
+	if p.timer != nil {
+		if vec, ok := p.timer[name]; ok {
+			vec.Reset()
+		}
+	}
+}
+
 
 func (p *Prom) UnRegister(typ,name string) error {
 	if VecMap == nil {
@@ -210,9 +234,11 @@ func PrometheusOpeartor(jobName, name string, v int64 ,lables []string, opeator 
 		case Add:
 			prom.Vec.Add(lables, v, name)
 		case Set:
-			prom.Vec.Add(lables, v, name)
+			prom.Vec.State(lables, v, name)
 		case Timing:
 			prom.Vec.Timing(lables, v, name)
+		case Reset:
+			prom.Vec.Reset(name)
 		default:
 			return errors.New("opeartor is not exist")
 		}

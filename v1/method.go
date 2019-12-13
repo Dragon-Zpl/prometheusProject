@@ -3,6 +3,7 @@ package v1
 import (
 	"PrometheusProject/conf"
 	"PrometheusProject/consul"
+	"PrometheusProject/lib/helper"
 	"PrometheusProject/lib/stringi"
 	"PrometheusProject/prometheus"
 	"PrometheusProject/v1/form"
@@ -17,6 +18,7 @@ import (
 	"strings"
 	"gopkg.in/gomail.v2"
 	"sync"
+	"time"
 )
 
 func GetDirFileList(path string) map[string]struct{} {
@@ -81,12 +83,18 @@ func SendDingDing(url string, data form.DingTalkRes) error {
 		"atMobiles": strings.Join(data.At.AtMobiles, ","),
 		"isAtAll": "false",
 	})
+	fmt.Println(sendStr)
 	jsonValue := []byte(sendStr)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonValue))
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(resp)
+	respData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(helper.Date("Y-m-d H:i:s", time.Now().Unix()))
+	fmt.Println(string(respData))
 	return err
 }
 

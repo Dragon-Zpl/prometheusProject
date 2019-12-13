@@ -421,6 +421,9 @@ func Promoperation(ctx *gin.Context)  {
 		opt = prometheus.Timing
 	case "set":
 		opt = prometheus.Set
+	default:
+		ctx.JSON(helper.Fail("不存在该该操作"))
+		return
 	}
 
 	if _, ok := prometheus.RegisterPromMap[input.JobName]; !ok {
