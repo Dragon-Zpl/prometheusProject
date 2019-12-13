@@ -18,6 +18,7 @@ func Mapping(prefix string, app *gin.Engine) {
 	view.GET("/consul/list", GetConsulServer)
 }
 
+//查看有哪些报警规则组
 func GetRulesList(ctx *gin.Context)  {
 	datas := v1.GetDirFileList(conf.PromethuesPath.Path)
 	res := make([]string, 0)
@@ -28,6 +29,7 @@ func GetRulesList(ctx *gin.Context)  {
 	return
 }
 
+// 获取报警规则
 func GetOneRules(ctx *gin.Context)  {
 	var input form.GetOneRulesForm
 	if err := ctx.ShouldBind(&input); err != nil {
@@ -70,7 +72,7 @@ func GetOneRules(ctx *gin.Context)  {
 
 }
 
-
+// 查看注册的服务
 func GetConsulServer(ctx *gin.Context)  {
 	res := consul.GetConsulRegisterService()
 

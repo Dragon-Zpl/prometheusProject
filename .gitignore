@@ -10,3 +10,4 @@ test.go
 mysql.rules
 build.sh
 alertmanager
+my_test.go
