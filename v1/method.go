@@ -9,6 +9,7 @@ import (
 	"PrometheusProject/v1/form"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/astaxie/beego/logs"
 	"github.com/lxzan/hasaki"
@@ -144,16 +145,16 @@ func RegisterFromConsul()  {
 	}
 }
 
-func RegisterOneVec(jobName, typ, labels, name string)  {
+func RegisterOneVec(jobName, typ, labels, name string, needReg ...bool)  {
 	if v, ok := prometheus.RegisterPromMap[jobName]; ok {
 		var err error
 		switch typ {
 		case "counter":
-			err = v.Vec.WithCounter(name, strings.Split(labels, ","))
+			err = v.Vec.WithCounter(name, strings.Split(labels, ","), needReg...)
 		case "state":
-			err = v.Vec.WithState(name, strings.Split(labels, ","))
+			err = v.Vec.WithState(name, strings.Split(labels, ","), needReg...)
 		case "time":
-			err = v.Vec.WithTimer(name, strings.Split(labels, ","))
+			err = v.Vec.WithTimer(name, strings.Split(labels, ","), needReg...)
 		default:
 			return
 		}
@@ -165,16 +166,140 @@ func RegisterOneVec(jobName, typ, labels, name string)  {
 		newProm.Vec = prometheus.New()
 		switch typ {
 		case "counter":
-			newProm.Vec.WithCounter(name, strings.Split(labels, ","))
+			newProm.Vec.WithCounter(name, strings.Split(labels, ","), needReg...)
 		case "state":
-			newProm.Vec.WithState(name, strings.Split(labels, ","))
+			newProm.Vec.WithState(name, strings.Split(labels, ","), needReg...)
 		case "time":
-			newProm.Vec.WithTimer(name, strings.Split(labels, ","))
+			newProm.Vec.WithTimer(name, strings.Split(labels, ","), needReg...)
 		default:
 			return
 		}
 		newProm.JobName = jobName
 		newProm.Lock = sync.Mutex{}
 		prometheus.RegisterPromMap[jobName] = newProm
+	}
+}
+
+func RegisterVecService(input form.RegisterVecForm) error {
+	if input.JobName == "jobName" {
+		return errors.New("jobName 存在请更换")
+	}
+	if v, ok := prometheus.RegisterPromMap[input.JobName]; ok {
+		var err error
+		switch input.Typ {
+		case "counter":
+			err = v.Vec.WithCounter(input.Name, strings.Split(input.Lables, ","))
+		case "state":
+			err = v.Vec.WithState(input.Name, strings.Split(input.Lables, ","))
+		case "time":
+			err = v.Vec.WithTimer(input.Name, strings.Split(input.Lables, ","))
+		default:
+			return errors.New("不存在该类型指标")
+		}
+		if err != nil {
+			return err
+		}
+	} else {
+		newProm := prometheus.NewRegisterProm()
+		newProm.Vec = prometheus.New()
+		var err error
+		switch input.Typ {
+		case "counter":
+			err = newProm.Vec.WithCounter(input.Name, strings.Split(input.Lables, ","))
+		case "state":
+			err = newProm.Vec.WithState(input.Name, strings.Split(input.Lables, ","))
+		case "time":
+			err = newProm.Vec.WithTimer(input.Name, strings.Split(input.Lables, ","))
+		default:
+			return errors.New("不存在该类型指标")
+		}
+		if err != nil {
+			return err
+		}
+		newProm.JobName = input.JobName
+		newProm.Lock = sync.Mutex{}
+		prometheus.RegisterPromMap[input.JobName] = newProm
+		jobNames := make([]string, 0)
+		if data := consul.GetKeyData("jobName"); len(data) > 0{
+			oldJobName := make([]string, 0)
+			json.Unmarshal(data, &oldJobName)
+			flag := 0
+			for _, v := range oldJobName {
+				if v == input.JobName {
+					flag = 1
+				}
+			}
+			if flag == 0 {
+				jobNames = append(oldJobName, input.JobName)
+			} else {
+				jobNames = oldJobName
+			}
+		} else {
+			jobNames = append(jobNames, input.JobName)
+		}
+		if err := consul.SetKeyValue("jobName", jobNames); err != nil {
+			return err
+		}
+	}
+	consulData := consul.ConsulKVData{
+		Name:   input.Name,
+		Labels: strings.Split(input.Lables, ","),
+		Type:   input.Typ,
+	}
+
+	if err := consul.SetJobNameValue(input.JobName, consulData); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var TutuTaskData map[string]float64
+
+func InitTutuConsul()  {
+	TutuTaskData = make(map[string]float64)
+
+	keys := consul.GetAllKey(conf.Consul.DirName + "/"  +conf.Consul.Prefix)
+	var value float64
+	for _, key := range keys {
+		json.Unmarshal(consul.GetKeyData(key), &value)
+		TutuTaskData[key] = value
+		name := strings.Split(key, "/")[1]
+		RegisterOneVec(conf.Consul.DirName, "state", "jobName", name, true)
+		prometheus.PrometheusOpeartor(conf.Consul.DirName, name, value, []string{name}, prometheus.Set)
+	}
+}
+
+
+
+func ListenConsul() {
+	t := time.NewTimer(60 * time.Second)
+	var value float64
+	for   {
+		select {
+		case <-t.C:
+			keys := consul.GetAllKey(conf.Consul.DirName + "/"  +conf.Consul.Prefix)
+			for _, key := range keys {
+				json.Unmarshal(consul.GetKeyData(key), &value)
+				if v, ok := TutuTaskData[key]; ok {
+					if v != value {
+						name := strings.Split(key, "/")[1]
+						prometheus.PrometheusOpeartor(conf.Consul.DirName, name, value, []string{name}, prometheus.Set)
+					}
+				} else {
+					TutuTaskData[key] = value
+					name := strings.Split(key, "/")[1]
+					RegisterVecService(form.RegisterVecForm{
+						JobName: conf.Consul.DirName,
+						Name:    name,
+						Lables:  "jobName",
+						Typ:     "state",
+					})
+					prometheus.PrometheusOpeartor(conf.Consul.DirName, name, value, []string{name}, prometheus.Set)
+				}
+			}
+
+			t.Reset(60 * time.Second)
+		}
 	}
 }

@@ -68,7 +68,7 @@ type PromoperationForm struct {
 	JobName string `form:"jobName"`
 	Name string `form:"name"`
 	Operation string `form:"operation"`
-	Value int64 `form:"value"`
+	Value float64 `form:"value"`
 	Labels string `form:"labels"`
 }
 

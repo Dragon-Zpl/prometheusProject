@@ -12,6 +12,8 @@ func main() {
 	go prometheus.GetPromHttp(":37983").ListenAndServe()
 	// 注册已存在任务
 	go v1.RegisterFromConsul()
+	v1.InitTutuConsul()
+	go v1.ListenConsul()
 	r := route.Router()
 	r.Run(":37984")
 }

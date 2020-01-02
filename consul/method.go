@@ -1,12 +1,18 @@
 package consul
 
 import (
+	"PrometheusProject/conf"
 	"encoding/json"
+	"errors"
 	"fmt"
 	consulapi "github.com/hashicorp/consul/api"
+	"strings"
 )
 
 func SetJobNameValue(key string, value ConsulKVData) error{
+	if strings.Contains(key, conf.Consul.Prefix) {
+		return errors.New("含有tutu_将被禁用，请替换")
+	}
 	var newData []ConsulKVData
 	if oldData := GetJobNameData(key); oldData != nil {
 		newData = append(oldData, value)

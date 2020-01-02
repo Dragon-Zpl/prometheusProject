@@ -34,6 +34,8 @@ type EmailConfig struct {
 
 type ConsulConfig struct {
 	Url string
+	Prefix string
+	DirName string
 }
 
 func GetRootPath() string {

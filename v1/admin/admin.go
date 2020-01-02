@@ -15,7 +15,6 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-	"sync"
 )
 
 func Mapping(prefix string, app *gin.Engine) {
@@ -326,76 +325,10 @@ func RegisterVec(ctx *gin.Context)  {
 		ctx.JSON(helper.Fail("参数校验失败"))
 		return
 	}
-	if input.JobName == "jobName" {
-		ctx.JSON(helper.Fail("jobName 存在请更换"))
+	if err := v1.RegisterVecService(input); err != nil {
+		ctx.JSON(helper.Fail(err.Error()))
 		return
 	}
-	if v, ok := prometheus.RegisterPromMap[input.JobName]; ok {
-		var err error
-		switch input.Typ {
-		case "counter":
-			err = v.Vec.WithCounter(input.Name, strings.Split(input.Lables, ","))
-		case "state":
-			err = v.Vec.WithState(input.Name, strings.Split(input.Lables, ","))
-		case "time":
-			err = v.Vec.WithTimer(input.Name, strings.Split(input.Lables, ","))
-		default:
-			ctx.JSON(helper.Fail("不存在该类型指标"))
-			return
-		}
-		if err != nil {
-			ctx.JSON(helper.Fail(err.Error()))
-			return
-		}
-	} else {
-		newProm := prometheus.NewRegisterProm()
-		newProm.Vec = prometheus.New()
-		var err error
-		switch input.Typ {
-		case "counter":
-			err = newProm.Vec.WithCounter(input.Name, strings.Split(input.Lables, ","))
-		case "state":
-			err = newProm.Vec.WithState(input.Name, strings.Split(input.Lables, ","))
-		case "time":
-			err = newProm.Vec.WithTimer(input.Name, strings.Split(input.Lables, ","))
-		default:
-			ctx.JSON(helper.Fail("不存在该类型指标"))
-			return
-		}
-		if err != nil {
-			ctx.JSON(helper.Fail(err.Error()))
-			return
-		}
-		newProm.JobName = input.JobName
-		newProm.Lock = sync.Mutex{}
-		prometheus.RegisterPromMap[input.JobName] = newProm
-		jobNames := make([]string, 0)
-		if data := consul.GetKeyData("jobName"); len(data) > 0{
-			oldJobName := make([]string, 0)
-			json.Unmarshal(data, &oldJobName)
-			flag := 0
-			for _, v := range oldJobName {
-				if v == input.JobName {
-					flag = 1
-				}
-			}
-			if flag == 0 {
-				jobNames = append(oldJobName, input.JobName)
-			} else {
-				jobNames = oldJobName
-			}
-		} else {
-			jobNames = append(jobNames, input.JobName)
-		}
-		consul.SetKeyValue("jobName", jobNames)
-	}
-	consulData := consul.ConsulKVData{
-		Name:   input.Name,
-		Labels: strings.Split(input.Lables, ","),
-		Type:   input.Typ,
-	}
-
-	consul.SetJobNameValue(input.JobName, consulData)
 	ctx.JSON(helper.Success())
 
 	return

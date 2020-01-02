@@ -36,7 +36,7 @@ func New() *Prom {
 	return &Prom{}
 }
 
-func (p *Prom) WithTimer(name string, labels []string) error {
+func (p *Prom) WithTimer(name string, labels []string, neeReg ...bool) error {
 	if p.timer == nil {
 		p.timer = make(map[string]*prometheus.HistogramVec)
 	}
@@ -52,12 +52,14 @@ func (p *Prom) WithTimer(name string, labels []string) error {
 	}, labels)
 	PrometheusRegistry.MustRegister(p.timer[name])
 	// 提前注册
-	p.timer[name].GetMetricWithLabelValues(labels...)
+	if len(neeReg) == 0 {
+		p.timer[name].GetMetricWithLabelValues(labels...)
+	}
 	VecMap[name] = len(labels)
 	return nil
 }
 
-func (p *Prom) WithCounter(name string, labels []string) error {
+func (p *Prom) WithCounter(name string, labels []string, neeReg ...bool) error {
 	if p.counter == nil {
 		p.counter = make(map[string]*prometheus.CounterVec)
 	}
@@ -74,12 +76,14 @@ func (p *Prom) WithCounter(name string, labels []string) error {
 	}, labels)
 	PrometheusRegistry.MustRegister(p.counter[name])
 	// 提前注册
-	p.counter[name].GetMetricWithLabelValues(labels...)
+	if len(neeReg) == 0 {
+		p.counter[name].GetMetricWithLabelValues(labels...)
+	}
 	VecMap[name] = len(labels)
 	return nil
 }
 
-func (p *Prom) WithState(name string, labels []string) error {
+func (p *Prom) WithState(name string, labels []string, neeReg ...bool) error {
 	if p.state == nil {
 		p.state = make(map[string]*prometheus.GaugeVec)
 	}
@@ -95,12 +99,14 @@ func (p *Prom) WithState(name string, labels []string) error {
 	}, labels)
 	PrometheusRegistry.MustRegister(p.state[name])
 	// 提前注册
-	p.state[name].GetMetricWithLabelValues(labels...)
+	if len(neeReg) == 0 {
+		p.state[name].GetMetricWithLabelValues(labels...)
+	}
 	VecMap[name] = len(labels)
 	return nil
 }
 
-func (p *Prom) Timing(labels []string, time int64, name string) {
+func (p *Prom) Timing(labels []string, time float64, name string) {
 
 	if p.timer != nil {
 		if v, ok := p.timer[name]; ok {
@@ -133,19 +139,19 @@ func (p *Prom) Decr(name string, labels []string) {
 
 }
 
-func (p *Prom) State(labels []string, v int64, name string) {
+func (p *Prom) State(labels []string, v float64, name string) {
 	if p.state != nil {
 		if vec, ok := p.state[name]; ok {
-			vec.WithLabelValues(labels...).Set(float64(v))
+			vec.WithLabelValues(labels...).Set(v)
 		}
 	}
 }
 
-func (p *Prom) Add(labels []string, v int64, name string) {
+func (p *Prom) Add(labels []string, v float64, name string) {
 	if p.counter != nil {
 		if vec, ok := p.counter[name]; ok{
 			if v > 0 {
-				vec.WithLabelValues(labels...).Add(float64(v))
+				vec.WithLabelValues(labels...).Add(v)
 			}
 		}
 	}
@@ -215,7 +221,7 @@ func (p *Prom) UnRegister(typ,name string) error {
 }
 
 
-func PrometheusOpeartor(jobName, name string, v int64 ,lables []string, opeator QueryType) error {
+func PrometheusOpeartor(jobName, name string, v float64 ,lables []string, opeator QueryType) error {
 	if prom, ok := RegisterPromMap[jobName]; ok {
 		if lables_len, ok := VecMap[name]; !ok {
 			return errors.New("该指标不存在，请前往注册")

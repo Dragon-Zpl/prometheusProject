@@ -3,6 +3,7 @@ package consul
 import (
 	"PrometheusProject/conf"
 	"encoding/json"
+	"errors"
 	"fmt"
 	consulapi "github.com/hashicorp/consul/api"
 	"log"
@@ -94,6 +95,9 @@ func GetKeyData(key string) []byte {
 }
 
 func SetKeyValue(key string, value interface{}) error {
+	if strings.Contains(key, conf.Consul.Prefix) {
+		return errors.New("含有tutu_将被禁用，请替换")
+	}
 	data, _ := json.Marshal(value)
 	_, err := ConsulClient.KV().Put(&consulapi.KVPair{
 		Key:         key,
@@ -118,3 +122,9 @@ func DeleteData(key string) error {
 	}
 	return nil
 }
+
+func GetAllKey(prefix string) []string {
+	allKeys, _, _ := ConsulClient.KV().Keys(prefix, "", nil)
+	return allKeys
+}
+
