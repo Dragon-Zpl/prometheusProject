@@ -86,3 +86,9 @@ type CronWebHookForm struct {
 	DingUrl string `json:"ding_url"`
 
 }
+
+type SendDingForm struct {
+	DingUrl string `form:"dingUrl"`
+	Title string `form:"title"`
+	Text string `form:"text"`
+}
